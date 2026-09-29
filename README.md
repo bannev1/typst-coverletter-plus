@@ -38,7 +38,7 @@ shared-file dependency.
 Create and compile a project with the Typst CLI:
 
 ```bash
-typst init @preview/modernpro-coverletter:1.0.2
+typst init @preview/modernpro-coverletter:1.0.3
 cd modernpro-coverletter
 typst compile coverletter.typ
 typst compile statement.typ
@@ -71,7 +71,7 @@ recompilation while editing.
 Keep your identity beside the letter content in the same source file:
 
 ```typst
-#import "@preview/modernpro-coverletter:1.0.2": *
+#import "@preview/modernpro-coverletter:1.0.3": *
 
 #let profile = (
   name: [Dr. Nova Placeholder],
@@ -166,7 +166,7 @@ second-level Typst headings are styled automatically, so a research statement
 stays easy to edit:
 
 ```typst
-#import "@preview/modernpro-coverletter:1.0.2": *
+#import "@preview/modernpro-coverletter:1.0.3": *
 
 #let profile = (
   name: [Dr. Nova Placeholder],
@@ -228,8 +228,9 @@ The CV, cover letter, and statement use the same tokens.
 | Header | Split grid: name, role, and location left; stacked contacts right; accent rule below |
 | Paragraph style | Left aligned, no first-line indent, block paragraphs |
 
-Because the left and right margins match the CV exactly, the header rule lands
-at the same position in every document of the application.
+The matching left and right margins align the endpoints of the header rule
+across the application. Its vertical position depends on the header's minimum
+height and the space needed by its content.
 
 Block paragraphs are easier to scan than justified text carrying both an indent
 and a blank gap. The default starter also avoids decorative icons, keeping text
@@ -271,10 +272,13 @@ Common layout keys are:
 | `justify` | Fully justify body text | `false` |
 | `header-style` | `"split"` or `"centered"` | `"split"` |
 | `contact-layout` | `"stacked"` or `"inline"` contacts in a split header | `"stacked"` |
+| `name-align` | Horizontal alignment of the name and role | `left` in split headers; `center` in centered headers |
+| `address-align` | Horizontal alignment of the address | `left` in split headers; `center` in centered headers |
+| `contact-align` | Horizontal alignment of contacts; icon lists keep labels aligned in their column | `right` in split headers; `center` in centered headers |
 | `repeat-header` | Add a compact continuation header from page 2 | cover letter: `false`; statement: `true` |
 | `page-numbering` | Add current and total page count to continuation headers | `true` |
-| `header-height` | First-page identity area height | `17mm` |
-| `contact-separator` | Separator between contact items | `" · "` |
+| `header-height` | Minimum first-page identity area height; grows with content | `17mm` |
+| `contact-separator` | Separator between inline contact items | `" · "` |
 | `date-format` | Format for an automatic date | `[day] [month repr:long] [year]` |
 
 The full identity header is always part of the first page's document flow. Its
@@ -284,6 +288,8 @@ count; contact details are not repeated or placed outside the accessible first
 page structure. Statements enable this behaviour by default.
 
 ## Contacts
+
+The adaptive header improvements described below are available in version 1.0.3.
 
 A contact may be linked, unlinked, or plain content, and may carry an optional
 `icon` exactly as in modernpro-cv:
@@ -296,9 +302,42 @@ contacts: (
 )
 ```
 
-Escape `@` as `\@` inside Typst content. Two or three concise academic contacts
-usually fit best. FontAwesome remains usable as an opt-in content choice, but it
-is not required by the package or starter.
+Escape `@` as `\@` inside Typst content (`[...]`). Quoted strings such as
+`"name@candidate.invalid"` do not need that escape. Two or three concise contacts
+keep the header short, but five is not a limit: add the items you need in the
+order you want them to appear. FontAwesome is optional and is not imported by
+the package or starter.
+
+### Sizing and wrapping
+
+`layout.header-height` is a **minimum**, not a fixed height or a limit. It
+defaults to 17 mm. Additional contacts and wrapped lines expand the header;
+the divider, recipient block or statement title, and body move down with it.
+Font sizes and row spacing stay at their configured values.
+
+Split headers that fit retain their bottom alignment. When content exceeds the
+minimum, the identity and contact columns align at the top. Long email
+addresses and URLs can break at punctuation; an individual segment wider than
+its column can break between characters. The text is not truncated, no hyphens
+or invisible characters are added to copied labels, and link destinations stay
+unchanged. Optional icons are centered by their visible glyph bounds within
+the label's first line, including wrapped labels. Font Awesome needs no
+`top-edge` adjustment; existing icons with `top-edge: "baseline"` also remain
+supported.
+
+### Header layouts
+
+| `layout.header-style` | `layout.contact-layout` | First-page layout |
+| --- | --- | --- |
+| `"split"` (default) | `"stacked"` (default) | Identity on the left; one contact per row on the right |
+| `"split"` | `"inline"` | Identity on the left; contacts flowing across lines on the right |
+| `"centered"` | Either value | Name, role, address, and inline contacts centered across the page |
+
+Inline items stay together when they fit the available width; a longer item
+wraps within that width. Centered headers always use inline contacts, so
+`contact-layout` only selects a layout for split headers. All of these settings
+work with both `coverletter` and `statement`. Profile photos remain a CV-only
+feature.
 
 ## Common recipes
 
@@ -315,12 +354,44 @@ closing: (
 
 ### Use a centered header
 
+This centers the name, role, address, and contacts without setting each
+alignment separately:
+
 ```typst
-layout: (
-  header-style: "centered",
-  contact-layout: "inline",
+#show: coverletter.with(
+  profile: profile,
+  layout: (header-style: "centered"),
 )
 ```
+
+Use `statement.with` for a statement. Explicit `name-align`, `address-align`,
+and `contact-align` settings still take precedence. For example, adding
+`address-align: left` inside `layout` keeps only the address left-aligned.
+Grouped `layout` settings take precedence over the corresponding legacy flat
+arguments.
+
+### Use inline contacts in a split header
+
+```typst
+#show: coverletter.with(
+  profile: profile,
+  layout: (contact-layout: "inline"),
+)
+```
+
+### Give the header more room
+
+```typst
+#show: coverletter.with(
+  profile: profile,
+  layout: (header-height: 24mm),
+)
+```
+
+This reserves at least 24 mm before the divider. Taller content still expands
+the header; reducing this value does not compress the contacts. For a matching
+CV and letter, use the same minimum with profiles and layouts that fit inside
+it. Different content or photo layouts can still require different heights.
 
 ### Disable a statement continuation header
 
@@ -370,6 +441,12 @@ remove them.
 ## Troubleshooting
 
 - **The email causes a syntax error:** escape `@` as `\@` inside Typst content.
+- **The header takes more space after adding contacts:** it expands to keep
+  every item readable. A smaller `header-height` does not shrink its content;
+  shorten labels or choose `preset: "compact"` if space is tight.
+- **A centered header still has left- or right-aligned text:** remove explicit
+  `name-align`, `address-align`, or `contact-align` overrides to use the centered
+  defaults.
 - **The first page looks crowded:** shorten the contact block and recipient
   address before selecting the compact preset.
 - **A statement heading is too close to a page break:** keep it as a Typst
@@ -380,12 +457,38 @@ remove them.
 
 ## Local development
 
+The commands below run from the repository root. To use the working template in
+your own document, place it beside `modernpro-coverletter.typ` and import that
+file:
+
+```typst
+#import "modernpro-coverletter.typ": *
+```
+
 Compile the repository examples against the working template:
 
 ```bash
 typst compile example-coverletter.typ
 typst compile example-statement.typ
 ```
+
+Run the header regression checks, including centered headers with long labels:
+
+```bash
+typst compile --root . tests/header-overflow.typ /tmp/letter-header.pdf
+typst compile --root . --input mode=centered --input long=true --input icons=true --input count=3 tests/header-overflow.typ /tmp/letter-header-centered.pdf
+```
+
+With the Font Awesome 7 desktop fonts installed, also run the glyph-alignment
+check. It mixes default and legacy `top-edge: "baseline"` icons:
+
+```bash
+typst compile --root . --input icons=fontawesome tests/header-overflow.typ /tmp/letter-header-icons.pdf
+```
+
+The fixture checks contact bounds, wrapping, first-line icon alignment, and
+centered defaults and overrides. Its opening comments list inputs for contact
+counts, presets, page widths, and `kind=statement`.
 
 All people, institutions, positions, projects, and claims in the examples are
 fictional.

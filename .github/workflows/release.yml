@@ -34,6 +34,8 @@ jobs:
           package_version=$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' typst.toml)
           test "$package_version" = "$GITHUB_REF_NAME"
           typst compile example-coverletter.typ /tmp/coverletter.pdf
+          typst compile --root . tests/header-overflow.typ /tmp/letter-header.pdf
+          typst compile --root . --input mode=centered --input long=true --input icons=true --input count=3 tests/header-overflow.typ /tmp/letter-header-centered.pdf
           typst compile example-statement.typ /tmp/statement.pdf
 
       - name: Build release archive

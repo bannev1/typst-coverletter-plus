@@ -1,4 +1,4 @@
-#import "@preview/modernpro-coverletter:1.0.2": *
+#import "@preview/modernpro-coverletter:1.0.3": *
 
 // Edit identity and contacts here. Keeping them beside the letter content
 // makes this starter a self-contained document with no personal-data imports.
